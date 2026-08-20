@@ -1,0 +1,13 @@
+# The protos are VENDORED from understory-io/shiitake (interface/proto), not
+# consumed from the BSR: that module is not published, and a provider that
+# cannot generate its own client from a clean checkout is a provider nobody can
+# release. Refresh with scripts/vendor-proto.sh when the service contract moves.
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

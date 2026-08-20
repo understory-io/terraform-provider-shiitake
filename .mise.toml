@@ -1,0 +1,65 @@
+[tools]
+go = "1.25"
+golangci-lint = "2"
+terraform = "1.9"
+# buf is only needed to refresh the vendored protos (scripts/vendor-proto.sh).
+# The generated Go under gen/ is committed, so a plain checkout builds without it.
+buf = "1"
+
+[tasks.test]
+description = "Run unit tests with race detector"
+run = "go test -race ./..."
+
+[tasks."test:acc"]
+description = "Run Terraform acceptance tests (requires SHIITAKE_SERVER + SHIITAKE_SERVICE_ACCOUNT_API_KEY)"
+env = { TF_ACC = "1" }
+run = "go test -race -timeout 30m ./internal/provider/..."
+
+[tasks.vet]
+description = "Run go vet"
+run = "go vet ./..."
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "golangci-lint run ./..."
+
+[tasks.vuln]
+description = "Run govulncheck"
+run = "go run golang.org/x/vuln/cmd/govulncheck@latest ./..."
+
+[tasks.coverage]
+description = "Run tests with coverage and print a summary"
+run = """
+go test -race -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out | tail -n 1
+"""
+
+[tasks.build]
+description = "Build the provider binary"
+run = "go build -o terraform-provider-shiitake ."
+
+[tasks."proto:vendor"]
+description = "Refresh the vendored shiitake protos + regenerate the Go client"
+run = "scripts/vendor-proto.sh ${SHIITAKE_REPO:-../shiitake}"
+
+[tasks."proto:check"]
+description = "Fail if the committed Go client is stale against the vendored protos"
+# Regenerating from the SAME protos must be a no-op. This catches a hand-edited
+# gen/ tree; it does not catch protos that have drifted from upstream shiitake —
+# for that, run `proto:vendor` and read the diff.
+run = """
+buf generate
+git diff --exit-code -- gen/
+"""
+
+[tasks."docs:check"]
+description = "Verify generated provider docs are up to date"
+run = "go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest validate"
+
+[tasks."docs:gen"]
+description = "Regenerate provider docs from schema and examples"
+run = "go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest generate"
+
+[tasks.ci]
+description = "Run all CI checks (no acceptance tests — those need a live shiitake-server)"
+depends = ["test", "vet", "lint", "vuln", "coverage", "build", "proto:check"]

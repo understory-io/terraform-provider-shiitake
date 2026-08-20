@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package shiitake.v1;
+
+// Vendored from understory-io/shiitake (interface/proto). Kept byte-identical
+// apart from this go_package option, which the Rust codegen does not need.
+option go_package = "github.com/understory-io/terraform-provider-shiitake/gen/shiitake/v1;shiitakev1";
+
+// ScheduleService — the slice registry (DATA-382, P2). Projects/workspaces
+// register the slices they want the orchestrator to run as one-off Fargate
+// tasks; the server holds them as event-sourced state and the scheduler
+// (P4) launches them on schedule. Authenticated via the same service-account
+// API key as CredentialService.
+
+// The desired state a project uploads for a slice. `schedule` empty means
+// one-shot (run on demand); non-empty is a cron expression. `arch` is
+// "x86_64" or "arm64" (Graviton, DATA-324).
+message SliceSpec {
+  string project = 1;   // owning workspace, e.g. "canopy-models"
+  string domain = 2;    // data-mesh domain, e.g. "payments"
+  string name = 3;      // unique slice id, e.g. "receipts-batch"
+  string image = 4;     // ghcr.io/understory-io/...
+  string schedule = 5;  // cron expr; empty => one-shot
+  string cpu = 6;       // Fargate units, e.g. "256"
+  string mem = 7;       // MiB, e.g. "512"
+  string arch = 8;      // "x86_64" | "arm64"
+  map<string, string> env = 9;
+}
+
+// Folded registry state for a slice.
+message SliceState {
+  SliceSpec spec = 1;
+  bool enabled = 2;
+  bool pruned = 3;
+}
+
+message RegisterSliceRequest {
+  SliceSpec spec = 1;
+}
+message RegisterSliceResponse {
+  string name = 1;
+}
+
+message GetSliceRequest {
+  string name = 1;
+}
+message GetSliceResponse {
+  bool found = 1;
+  SliceState state = 2;
+}
+
+message ListSlicesRequest {}
+message ListSlicesResponse {
+  repeated SliceState slices = 1;
+}
+
+// Stop scheduling a slice without deleting its history.
+message DisableSliceRequest {
+  string name = 1;
+}
+message DisableSliceResponse {}
+
+// Retire a slice that's gone from its workspace (stops scheduling + marks
+// it for ECS teardown). Idempotent.
+message PruneSliceRequest {
+  string name = 1;
+}
+message PruneSliceResponse {}
+
+// Declarative reconcile for one project/workspace: upsert every slice in
+// `slices`, then prune any still-active slice owned by `project` that isn't
+// present. This is the CI sync entry point — deleting a slice upstream
+// makes it absent here, which deprecates it.
+message SyncWorkspaceRequest {
+  string project = 1;
+  repeated SliceSpec slices = 2;
+}
+message SyncWorkspaceResponse {
+  repeated string registered = 1;
+  repeated string updated = 2;
+  repeated string pruned = 3;
+}
+
+service ScheduleService {
+  rpc RegisterSlice(RegisterSliceRequest) returns (RegisterSliceResponse);
+  rpc GetSlice(GetSliceRequest) returns (GetSliceResponse);
+  rpc ListSlices(ListSlicesRequest) returns (ListSlicesResponse);
+  rpc DisableSlice(DisableSliceRequest) returns (DisableSliceResponse);
+  rpc PruneSlice(PruneSliceRequest) returns (PruneSliceResponse);
+  rpc SyncWorkspace(SyncWorkspaceRequest) returns (SyncWorkspaceResponse);
+}

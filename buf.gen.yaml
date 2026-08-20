@@ -1,0 +1,13 @@
+# Go + gRPC stubs for the shiitake ScheduleService. Committed under
+# internal/shiitakepb so `go build` works on a clean checkout without buf
+# installed — the same reason canopy-models commits its fungus codegen.
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.6
+    out: gen
+    opt: paths=source_relative
+  - remote: buf.build/grpc/go:v1.5.1
+    out: gen
+    opt: paths=source_relative,require_unimplemented_servers=false
+inputs:
+  - directory: proto

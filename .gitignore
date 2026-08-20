@@ -1,0 +1,9 @@
+/terraform-provider-shiitake
+/dist
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# `mise run coverage` output
+coverage.out
