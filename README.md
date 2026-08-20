@@ -22,7 +22,7 @@ Registration is desired **state**, not an event. This provider makes it a review
 ```hcl
 terraform {
   required_providers {
-    shiitake = { source = "understory/shiitake" }
+    shiitake = { source = "understory-io/shiitake" }
   }
 }
 
@@ -80,7 +80,7 @@ A changed RPC in that diff is a provider change, not a formality.
 ```sh
 cat > /tmp/dev.tfrc <<'EOF'
 provider_installation {
-  dev_overrides { "understory/shiitake" = "/tmp/tfshiitake" }
+  dev_overrides { "understory-io/shiitake" = "/tmp/tfshiitake" }
   direct {}
 }
 EOF

@@ -25,6 +25,12 @@
 #      resource → returns a presigned URL → PUT the zip.
 #
 # Idempotent: re-uploading an existing version returns 422 and we skip.
+#
+# NOTE the PUBLIC registry uses a different namespace to this script. On
+# registry.terraform.io the namespace is the GITHUB ORG (`understory-io`), while
+# the TFC private registry namespace is the TFC ORGANISATION (`understory`).
+# Since the provider is now published publicly, this script is only useful for
+# also mirroring a version into the private registry.
 
 set -euo pipefail
 

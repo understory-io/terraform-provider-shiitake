@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     shiitake = {
-      source = "understory/shiitake"
+      source = "understory-io/shiitake"
     }
   }
 }
