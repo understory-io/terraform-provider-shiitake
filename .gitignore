@@ -1,0 +1,6 @@
+/terraform-provider-shiitake
+/dist
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
