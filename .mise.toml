@@ -1,5 +1,5 @@
 [tools]
-go = "1.25"
+go = "1.26.6"
 golangci-lint = "2"
 terraform = "1.9"
 # buf is only needed to refresh the vendored protos (scripts/vendor-proto.sh).
